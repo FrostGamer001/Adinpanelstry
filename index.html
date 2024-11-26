@@ -1,69 +1,47 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XD</title>
-    <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            background-color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        #photo {
-            display: none;
-            width: 300px;
-            border: 3px solid black;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>R/Place Clone</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      border: 1px solid #000;
+      margin-top: 20px;
+      cursor: crosshair;
+    }
+    .controls {
+      margin-top: 10px;
+    }
+    .color-picker {
+      display: flex;
+      gap: 5px;
+    }
+    .color-box {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+    .timer {
+      margin-top: 10px;
+      font-size: 18px;
+      color: red;
+    }
+  </style>
 </head>
 <body>
-    <img id="photo" src="" alt="Çekilen Fotoğraf"/>
-
-    <script>
-        let videoStream;
-
-        function requestCameraAccess() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    videoStream = stream;
-                    setTimeout(capturePhoto, 20000); // 20 saniye sonra fotoğraf çek
-                })
-                .catch(error => {
-                    console.error("Kamera erişimi reddedildi veya hata oluştu:", error);
-                });
-        }
-
-        function capturePhoto() {
-            const video = document.createElement("video");
-            video.srcObject = videoStream;
-            video.play();
-
-            const canvas = document.createElement("canvas");
-            canvas.width = 300;
-            canvas.height = 200;
-            const context = canvas.getContext("2d");
-
-            video.onloadedmetadata = () => {
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const dataUrl = canvas.toDataURL("image/png");
-                document.getElementById("photo").src = dataUrl;
-                videoStream.getTracks().forEach(track => track.stop()); // Kamerayı kapat
-            };
-        }
-
-        document.addEventListener("keydown", (e) => {
-            if (e.key.toLowerCase() === 'n') {
-                document.getElementById("photo").style.display = "block";
-            }
-        });
-
-        // Sayfa açıldığında kamera izni isteme
-        requestCameraAccess();
-    </script>
+  <h1>R/Place Clone</h1>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <div class="controls">
+    <div class="color-picker" id="color-picker"></div>
+    <div class="timer" id="timer">Cooldown: 0s</div>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>
