@@ -1,67 +1,77 @@
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const colorPicker = document.getElementById('color-picker');
-const timerEl = document.getElementById('timer');
+const uploadInput = document.getElementById("upload");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const autoPlaceButton = document.getElementById("autoPlace");
 
-const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#000000', '#FFFFFF'];
-let selectedColor = '#FF0000';
-let cooldown = 0;
+// Desteklenen renk paleti
+const palette = [
+  "#FFFFFF", "#E4E4E4", "#888888", "#222222", // Gri tonlar
+  "#FFA7D1", "#E50000", "#E59500", "#A06A42", // Kırmızı tonlar
+  "#E5D900", "#94E044", "#02BE01", "#00D3DD", // Yeşil ve Mavi tonlar
+  "#0083C7", "#0000EA", "#CF6EE4", "#820080"  // Mor tonlar
+];
 
-// Başlangıç piksel boyutu
-const pixelSize = 10;
-const cooldownTime = 5; // Saniye
+// PNG yükleme ve canvas'a çizim
+uploadInput.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
-// Tuvali başlat
-function initializeCanvas() {
-  for (let y = 0; y < canvas.height; y += pixelSize) {
-    for (let x = 0; x < canvas.width; x += pixelSize) {
-      ctx.fillStyle = '#FFFFFF'; // Beyaz arka plan
-      ctx.fillRect(x, y, pixelSize, pixelSize);
-    }
-  }
-}
-
-// Renk seçici oluştur
-function createColorPicker() {
-  colors.forEach(color => {
-    const colorBox = document.createElement('div');
-    colorBox.classList.add('color-box');
-    colorBox.style.backgroundColor = color;
-    colorBox.addEventListener('click', () => {
-      selectedColor = color;
-    });
-    colorPicker.appendChild(colorBox);
-  });
-}
-
-// Piksel boyama
-canvas.addEventListener('click', (e) => {
-  if (cooldown > 0) return;
-
-  const rect = canvas.getBoundingClientRect();
-  const x = Math.floor((e.clientX - rect.left) / pixelSize) * pixelSize;
-  const y = Math.floor((e.clientY - rect.top) / pixelSize) * pixelSize;
-
-  ctx.fillStyle = selectedColor;
-  ctx.fillRect(x, y, pixelSize, pixelSize);
-
-  cooldown = cooldownTime;
-  startCooldown();
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(img.src);
+  };
 });
 
-// Cooldown başlatma
-function startCooldown() {
-  const interval = setInterval(() => {
-    if (cooldown > 0) {
-      timerEl.textContent = `Cooldown: ${cooldown}s`;
-      cooldown--;
-    } else {
-      timerEl.textContent = 'Cooldown: 0s';
-      clearInterval(interval);
+// Renkleri palete uyarlama ve talimat oluşturma
+autoPlaceButton.addEventListener("click", () => {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels = imageData.data;
+  const commands = [];
+
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      const index = (y * canvas.width + x) * 4;
+      const r = pixels[index];
+      const g = pixels[index + 1];
+      const b = pixels[index + 2];
+
+      // Renk paletine en yakın renk
+      const color = getClosestColor(r, g, b);
+      commands.push({ x, y, color });
     }
-  }, 1000);
+  }
+
+  console.log("Talimatlar:", commands);
+  alert("Talimatlar oluşturuldu. Konsolu kontrol edin!");
+});
+
+// Renk paletine en yakın rengi bulma
+function getClosestColor(r, g, b) {
+  let closestColor = palette[0];
+  let closestDistance = Infinity;
+
+  for (const color of palette) {
+    const [cr, cg, cb] = hexToRgb(color);
+    const distance = Math.sqrt(
+      Math.pow(cr - r, 2) + Math.pow(cg - g, 2) + Math.pow(cb - b, 2)
+    );
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestColor = color;
+    }
+  }
+  return closestColor;
 }
 
-// Başlatma
-initializeCanvas();
-createColorPicker();
+// HEX'i RGB'ye çevirme
+function hexToRgb(hex) {
+  const bigint = parseInt(hex.slice(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return [r, g, b];
+}
